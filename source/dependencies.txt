@@ -1,0 +1,4 @@
+minecraft launcher lib: pip install minecraft_launcher_lib
+requests: pip install requests
+PyQt5: pip install pyqt5
+PyQt Web Engine: pip install pyqtwebengine
