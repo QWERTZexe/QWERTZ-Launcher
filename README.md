@@ -7,7 +7,7 @@ Run "minecraft launcher.exe"
 ### OTHER
 Run "minecraft launcher.py" located in the "source" folder   
 Requires python3 and the minecraft_launcher_lib library  
-All libraries are in stored in "dependencies.txt"
+All libraries are stored in "dependencies.txt"
 ## FEATURES
 ### MICROSOFT LOGIN
 You can login with microsoft  
