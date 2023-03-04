@@ -1,6 +1,7 @@
 # QWERTZ LAUNCHER
 An alternative to the normal minecraft launcher  
-Supports Fabric and some Forge versions
+Supports Fabric and some Forge versions  
+Written in python
 ## HOW TO USE
 ### WINDOWS
 Run "minecraft launcher.exe"
