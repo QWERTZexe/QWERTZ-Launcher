@@ -4,8 +4,7 @@ Supports Fabric and some Forge versions
 Written in python
 ## HOW TO USE
 ### WINDOWS
-Unzip the "windows.zip" file  
-Run "minecraft launcher.exe"
+Run "minecraft launcher.exe" in the windows folder
 ### OTHER
 Run "minecraft launcher.py" located in the "source" folder   
 Requires python3 and the minecraft_launcher_lib library  
