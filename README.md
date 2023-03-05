@@ -4,6 +4,7 @@ Supports Fabric and some Forge versions
 Written in python
 ## HOW TO USE
 ### WINDOWS
+Download the latest [release](https://github.com/QWERTZexe/QWERTZ-LAUNCHER/releases)  
 Run "minecraft launcher.exe" in the windows folder
 ### OTHER
 Run "minecraft launcher.py" located in the "source" folder   
