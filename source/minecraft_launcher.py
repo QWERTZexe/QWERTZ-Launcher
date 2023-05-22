@@ -15,10 +15,19 @@ import json, shutil
 app = QApplication(sys.argv)
 cwd = os.path.dirname(sys.argv[0])
 mods_folder = ""
+print(f"{cwd}\\refresh_token.json")
+clientid="3d006e3a-abc5-4c7f-af37-d4f2104128f5"
 # This line sets the language of the webpage to the system language
 QWebEngineProfile.defaultProfile().setHttpAcceptLanguage(QLocale.system().name().split("_")[0])
-w = microsoftlogin.LoginWindow()
-app.exec()
+try:
+    with open(f"{cwd}\\refresh_token.json","r") as f:
+        refresh = f.read()
+        refresh = refresh.strip('"')
+    print(refresh)
+    minecraft_launcher_lib.microsoft_account.complete_refresh(client_id=clientid,refresh_token=refresh,client_secret=None,redirect_uri=None)
+except:
+    w = microsoftlogin.LoginWindow()
+    app.exec()
 ctypes.windll.shcore.SetProcessDpiAwareness
 beab = 0
 version = ""
