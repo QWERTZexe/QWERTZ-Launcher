@@ -1,0 +1,4 @@
+minecraft_launcher_lib
+requests
+pyqt5
+pyqtwebengine
