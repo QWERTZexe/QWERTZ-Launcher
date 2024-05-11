@@ -1458,15 +1458,22 @@ class LaunchGame(QThread):
                     self.detect_crash.emit("Crash",f'Instance {self.name} crashed with exit code {exitcode.returncode}!')      
 
 if __name__ == '__main__':
-    restart = 1
-    while restart == 1:
-        restart = 0
-        app = QApplication(sys.argv)
-        app.setStyle('Fusion')  # Set the application style to Fusion
-        app.setPalette(QPalette(QColor(30, 30, 30)))  # Set the application palette to dark
-        ex = Launcher()
-        ex.show()
-        exitcode = app.exec()
-        del app
-        del ex
-    sys.exit(exitcode)
+    if len(sys.argv) > 1:
+        test = sys.argv[1]
+    else:
+        test = "notest"
+    if not test == "test":
+        restart = 1
+        while restart == 1:
+            restart = 0
+            app = QApplication(sys.argv)
+            app.setStyle('Fusion')  # Set the application style to Fusion
+            app.setPalette(QPalette(QColor(30, 30, 30)))  # Set the application palette to dark
+            ex = Launcher()
+            ex.show()
+            exitcode = app.exec()
+            del app
+            del ex
+        sys.exit(exitcode)
+    else:
+        print("Works :D")
