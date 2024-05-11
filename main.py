@@ -1,3 +1,22 @@
+#Copyright (C) 2024  QWERTZexe
+
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU Affero General Public License as published
+#by the Free Software Foundation, either version 3 of the License, or
+#any later version.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU Affero General Public License for more details.
+#
+#You should have received a copy of the GNU Affero General Public License
+#along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+######################################################
+
+### MAIN ###
+
 import sys, os, json, subprocess, shutil, zipfile
 import uuid as uuuid
 from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QComboBox, QMessageBox, QToolBar, QGridLayout, QFrame,QMainWindow,QStyle,QStyleOption,QStylePainter,QScrollArea,QVBoxLayout,QMenu,QFileDialog,QDialog,QLineEdit,QLineEdit, QToolButton,QHBoxLayout,QHBoxLayout,QSizePolicy,QListWidget,QProgressBar,QVBoxLayout,QCheckBox
