@@ -657,7 +657,10 @@ class ProfileButton(QPushButton):
 
                 with open(f"{cwd}/profiles.json", "w") as f:
                     json.dump(profiles_data, f, indent=2)
-
+                try:
+                    shutil.move(f"{cwd}/profiles/{self.name}",f"{cwd}/profiles/{new_name}")
+                except:
+                    pass
                 self.name = new_name
                 self.setText(new_name)
                 self.parentt.reinitLauncher()
@@ -1372,6 +1375,7 @@ class LaunchGame(QThread):
             cmd[cmd.index("--gameDir")+1] = f"{cwd}/profiles/{self.name}"
             if not self.jvm == "BI":
                 cmd[0] = self.jvm
+            os.makedirs(f"{cwd}/profiles/{self.name}",exist_ok=True)
             os.chdir(f"{cwd}/profiles/{self.name}")
             exitcode = subprocess.run(cmd)
             try:
@@ -1395,6 +1399,7 @@ class LaunchGame(QThread):
             if not self.jvm == "BI":
                 cmd[0] = self.jvm
                 
+            os.makedirs(f"{cwd}/profiles/{self.name}",exist_ok=True)
             os.chdir(f"{cwd}/profiles/{self.name}")
             exitcode = subprocess.run(cmd)
             try:
@@ -1442,6 +1447,7 @@ class LaunchGame(QThread):
                     stri = stri.__add__(i)
                     stri = stri.__add__(" ")
                 
+                os.makedirs(f"{cwd}/profiles/{self.name}",exist_ok=True)
                 os.chdir(f"{cwd}/profiles/{self.name}")
                 exitcode = subprocess.run(cmd)
                 try:
