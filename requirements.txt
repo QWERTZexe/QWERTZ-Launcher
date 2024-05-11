@@ -1,4 +1,4 @@
 minecraft_launcher_lib
 requests
-pyqt5
-pyqtwebengine
+pyqt6
+pyqt6-webengine
