@@ -22,7 +22,17 @@ You can login with microsoft
 ### AUTO-REFRESH SESSIONS
 YOU can decide WHEN to refresh sessions 
 ## SCREENSHOTS
+![LAUNCHER](https://raw.githubusercontent.com/QWERTZexe/QWERTZ-Launcher/main/screenshots/Launcher.png)
 
+![ADDINSTANCE](https://raw.githubusercontent.com/QWERTZexe/QWERTZ-Launcher/main/screenshots/AddInstance.png)
+
+![ACCOUNTMANAGER](https://raw.githubusercontent.com/QWERTZexe/QWERTZ-Launcher/main/screenshots/AccountManager.png)
+
+![MICROSOFTAUTH](https://raw.githubusercontent.com/QWERTZexe/QWERTZ-Launcher/main/screenshots/MicrosoftAuth.png)
+
+![ACCOUNTSWITCHER](https://raw.githubusercontent.com/QWERTZexe/QWERTZ-Launcher/main/screenshots/AccountSwitcher.png)
+
+![RIGHTCLICKACTIONS](https://raw.githubusercontent.com/QWERTZexe/QWERTZ-Launcher/main/screenshots/RightClickActions.png)
 ## ICON CREDIT
 <a href="https://www.flaticon.com/free-icons/ui" title="ui icons">Ui icons created by judanna - Flaticon</a>
 <a href="https://www.flaticon.com/free-icons/minecraft" title="minecraft icons">Minecraft icons created by Those Icons - Flaticon</a>
