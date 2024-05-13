@@ -17,6 +17,7 @@ You can create multiple instances to launch any modpack you like
 Supports infinite microsoft accounts
 ### OFFLINE ACCOUNT MAKER
 You can create offline accounts
+(Please note that you still need a premium account in order to download the game, WE DO NOT SUPPORT PIRACY!!!)
 ### MICROSOFT LOGIN
 You can login with microsoft 
 ### AUTO-REFRESH SESSIONS
