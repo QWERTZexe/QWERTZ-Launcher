@@ -1012,16 +1012,16 @@ class Launcher(QMainWindow):
                     ver=profile["version"]
                     loader=profile["loader"]
                     name=profile["name"]
-            def set_status(status: str,smth=None):
+            def set_status(status: str):
                 print(status)
-                pass
-
-            def set_progress(progress: int,smth=None):
+                if status == "Installation complete":
+                    ex.launchButton.setText("Launch")
+            def set_progress(progress: int):
                 if current_max != 0:
-                    pass
                     print(f"{progress}/{current_max}")
+                    ex.launchButton.setText(f"{progress}/{current_max}")
 
-            def set_max(new_max: int,smth=None):
+            def set_max(new_max: int):
                 global current_max
                 current_max = new_max
 
@@ -1369,16 +1369,17 @@ class LaunchGame(QThread):
     def run(self):
         def set_status(status: str):
             print(status)
-            pass
-
+            if status == "Installation complete":
+                ex.launchButton.setText("Launch")
         def set_progress(progress: int):
             if current_max != 0:
-                pass
                 print(f"{progress}/{current_max}")
+                ex.launchButton.setText(f"{progress}/{current_max}")
 
         def set_max(new_max: int):
             global current_max
             current_max = new_max
+
 
         callback = {
             "setStatus": set_status,
