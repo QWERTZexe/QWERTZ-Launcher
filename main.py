@@ -35,7 +35,11 @@ if not os.path.exists(f"{cwd}/accounts.json"):
         json.dump({"accounts":[{"username":"USERNAME","uuid":"8be48703-76cc-4403-b631-fee288045323","token":"fake_token"}],"active":"USERNAME","refresh":{"start":"1","launch":"0"}},f,indent=2)
 if not os.path.exists(f"{cwd}/.minecraft"):
     os.makedirs(f"{cwd}/.minecraft",exist_ok=True)
-
+try:
+    import pyi_splash # type: ignore
+    pyi_splash.update_text('REFRESHING TOKENS...')
+except:
+    pass
 mcdir = f"{cwd}/.minecraft"
 CLIENT_ID = "3d006e3a-abc5-4c7f-af37-d4f2104128f5"
 REDIRECT_URL = "https://login.microsoftonline.com/common/oauth2/nativeclient/"
@@ -975,7 +979,11 @@ class Launcher(QMainWindow):
         buttonLayout.addWidget(self.repairButton)
 
         layout.addLayout(buttonLayout)
-
+        try:
+            import pyi_splash # type: ignore
+            pyi_splash.close()
+        except:
+            pass
     def reinitLauncher(self):
         self.infoLabel.setText(f"Select a profile to see details here.")
         # Remove all existing profile buttons
@@ -1509,6 +1517,11 @@ class LaunchGame(QThread):
                     self.detect_crash.emit("Crash",f'Instance {self.name} crashed with exit code {exitcode.returncode}!')      
 
 if __name__ == '__main__':
+    try:
+        import pyi_splash # type: ignore
+        pyi_splash.update_text('FINISHING...')
+    except:
+        pass
     if len(sys.argv) > 1:
         test = sys.argv[1]
     else:
