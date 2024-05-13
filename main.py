@@ -1320,17 +1320,39 @@ class RepairThread(QThread):
         self.loader = loader
 
     def run(self):
+        premium_account = False
+        with open(f"{cwd}/accounts.json", "r", encoding="utf-8") as f:
+            accounts = json.load(f)
+        for account in accounts["accounts"]:
+            index = accounts["accounts"].index(account)
+            try:
+                refresh_token = account["refresh_token"]
+            except:
+                refresh_token = None
+            if refresh_token:
+                premium_account = True
         if self.loader == "VANILLA":
-            mc.install.install_minecraft_version(self.version,self.mcdir,self.callback)
-            self.repair_done.emit("Done",f'Successfully repaired {self.name}!')
+            if premium_account:
+                mc.install.install_minecraft_version(self.version,self.mcdir,self.callback)
+                self.repair_done.emit("Done",f'Successfully repaired {self.name}!')
+            else:
+                self.repair_done.emit("Error",f'Unfortunately, you cannot download minecraft without having a premium account added, Please add at least a single microsoft account to play!')
         elif self.loader == "FABRIC":
-            mc.install.install_minecraft_version(self.version, f"{mcdir}", callback=self.callback)
-            mc.fabric.install_fabric(self.version, mcdir,callback=self.callback)
-        elif self.loader == "FORGE":
-            forge_version = mc.forge.find_forge_version(self.version)
-            if mc.forge.supports_automatic_install(forge_version):
+            if premium_account:
                 mc.install.install_minecraft_version(self.version, f"{mcdir}", callback=self.callback)
-                mc.forge.install_forge_version(forge_version, f"{mcdir}", callback=self.callback)
+                mc.fabric.install_fabric(self.version, mcdir,callback=self.callback)
+            else:
+                self.repair_done.emit("Error",f'Unfortunately, you cannot download minecraft without having a premium account added, Please add at least a single microsoft account to play!')
+
+        elif self.loader == "FORGE":
+            if premium_account:
+                forge_version = mc.forge.find_forge_version(self.version)
+                if mc.forge.supports_automatic_install(forge_version):
+                    mc.install.install_minecraft_version(self.version, f"{mcdir}", callback=self.callback)
+                    mc.forge.install_forge_version(forge_version, f"{mcdir}", callback=self.callback)
+            else:
+                self.repair_done.emit("Error",f'Unfortunately, you cannot download minecraft without having a premium account added, Please add at least a single microsoft account to play!')
+
 class LaunchGame(QThread):
     # Define a signal that sends a string
     detect_crash = pyqtSignal(str,str)
@@ -1366,15 +1388,32 @@ class LaunchGame(QThread):
         
         versions = mc.utils.get_installed_versions(f"{mcdir}")
         keys = []
+        premium_account = False
+        with open(f"{cwd}/accounts.json", "r", encoding="utf-8") as f:
+            accounts = json.load(f)
+        for account in accounts["accounts"]:
+            index = accounts["accounts"].index(account)
+            try:
+                refresh_token = account["refresh_token"]
+            except:
+                refresh_token = None
+            if refresh_token:
+                premium_account = True
         if self.loader == "VANILLA":
             for dict in versions:   
                 keys.append(dict["id"])
             if not self.ver in keys:
-                mc.install.install_minecraft_version(self.ver, f"{mcdir}", callback=callback)
-            cmd = mc.command.get_minecraft_command(self.ver,f"{mcdir}",self.options)
-            cmd[cmd.index("--gameDir")+1] = f"{cwd}/profiles/{self.name}"
-            if not self.jvm == "BI":
-                cmd[0] = self.jvm
+                if premium_account:
+                    mc.install.install_minecraft_version(self.ver, f"{mcdir}", callback=callback)
+                else:
+                    self.detect_crash.emit("Error",f'Unfortunately, you cannot download minecraft without having a premium account added, Please add at least a single microsoft account to play!')
+            try:
+                cmd = mc.command.get_minecraft_command(self.ver,f"{mcdir}",self.options)
+                cmd[cmd.index("--gameDir")+1] = f"{cwd}/profiles/{self.name}"
+                if not self.jvm == "BI":
+                    cmd[0] = self.jvm
+            except:
+                cmd = ["java","--version"]
             os.makedirs(f"{cwd}/profiles/{self.name}",exist_ok=True)
             os.chdir(f"{cwd}/profiles/{self.name}")
             exitcode = subprocess.run(cmd)
@@ -1392,13 +1431,18 @@ class LaunchGame(QThread):
             for dict in versions:
                 keys.append(dict["id"])
             if not vername in keys:
-                mc.install.install_minecraft_version(self.ver, f"{mcdir}", callback=callback)
-                mc.fabric.install_fabric(self.ver, mcdir,callback=callback)
-            cmd = mc.command.get_minecraft_command(vername,f"{mcdir}",self.options)
-            cmd[cmd.index("--gameDir")+1] = f"{cwd}/profiles/{self.name}"
-            if not self.jvm == "BI":
-                cmd[0] = self.jvm
-                
+                if premium_account:
+                    mc.install.install_minecraft_version(self.ver, f"{mcdir}", callback=callback)
+                    mc.fabric.install_fabric(self.ver, mcdir,callback=callback)
+                else:
+                    self.detect_crash.emit("Error",f'Unfortunately, you cannot download minecraft without having a premium account added, Please add at least a single microsoft account to play!')
+            try:
+                cmd = mc.command.get_minecraft_command(vername,f"{mcdir}",self.options)
+                cmd[cmd.index("--gameDir")+1] = f"{cwd}/profiles/{self.name}"
+                if not self.jvm == "BI":
+                    cmd[0] = self.jvm
+            except:
+                cmd = ["java","--version"]  
             os.makedirs(f"{cwd}/profiles/{self.name}",exist_ok=True)
             os.chdir(f"{cwd}/profiles/{self.name}")
             exitcode = subprocess.run(cmd)
@@ -1419,17 +1463,27 @@ class LaunchGame(QThread):
                         keys.append(dict["id"])
                 keys2.append(dict["id"])
             a=0
+            b=0
             if keys == []:
-                if mc.forge.supports_automatic_install(forge_version):
-                    mc.install.install_minecraft_version(self.ver, f"{mcdir}", callback=callback)
-                    mc.forge.install_forge_version(forge_version, f"{mcdir}", callback=callback)
+                if premium_account:
+                    if mc.forge.supports_automatic_install(forge_version):
+                        mc.install.install_minecraft_version(self.ver, f"{mcdir}", callback=callback)
+                        mc.forge.install_forge_version(forge_version, f"{mcdir}", callback=callback)
+                    else:
+                        if not os.path.exists(f"{cwd}/.minecraft/versions/1.8.9-forge1.8.9-11.15.1.2318-1.8.9"):
+                            self.confirm_legacy.emit()
+                            a=1
                 else:
-                    if not os.path.exists(f"{cwd}/.minecraft/versions/1.8.9-forge1.8.9-11.15.1.2318-1.8.9"):
-                        self.confirm_legacy.emit()
-                        a=1
+                    b=1
+                    self.detect_crash.emit("Error",f'Unfortunately, you cannot download minecraft without having a premium account added, Please add at least a single microsoft account to play!')
             if not a==1:
                 if not self.ver in keys2:
-                    mc.install.install_minecraft_version(self.ver, f"{mcdir}", callback=callback)
+                    if b==0:
+                        if premium_account:
+                            mc.install.install_minecraft_version(self.ver, f"{mcdir}", callback=callback)
+                        else:
+                            self.detect_crash.emit("Error",f'Unfortunately, you cannot download minecraft without having a premium account added, Please add at least a single microsoft account to play!')
+
                 keys = []
                 for dict in versions:
                     if "forge" in dict["id"].lower():
@@ -1442,10 +1496,6 @@ class LaunchGame(QThread):
                         cmd[0] = self.jvm
                 except:
                     cmd = ["java","--version"]
-                stri = ""
-                for i in cmd:
-                    stri = stri.__add__(i)
-                    stri = stri.__add__(" ")
                 
                 os.makedirs(f"{cwd}/profiles/{self.name}",exist_ok=True)
                 os.chdir(f"{cwd}/profiles/{self.name}")
