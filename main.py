@@ -19,7 +19,7 @@
 
 import sys, os, json, subprocess, shutil, zipfile
 import uuid as uuuid
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QComboBox, QMessageBox, QToolBar, QGridLayout, QFrame,QMainWindow,QStyle,QStyleOption,QStylePainter,QScrollArea,QVBoxLayout,QMenu,QFileDialog,QDialog,QLineEdit,QLineEdit, QToolButton,QHBoxLayout,QHBoxLayout,QSizePolicy,QListWidget,QProgressBar,QVBoxLayout,QCheckBox
+from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QComboBox, QMessageBox, QToolBar, QGridLayout, QFrame,QMainWindow,QStyle,QStyleOption,QStylePainter,QScrollArea,QVBoxLayout,QMenu,QFileDialog,QDialog,QLineEdit,QLineEdit, QToolButton,QHBoxLayout,QHBoxLayout,QSizePolicy,QListWidget,QProgressBar,QVBoxLayout,QCheckBox,QListWidgetItem
 from PyQt6.QtCore import Qt, QSize,QUrl,pyqtSignal,QThread
 import minecraft_launcher_lib as mc
 import threading, requests
@@ -43,7 +43,9 @@ except:
 mcdir = f"{cwd}/.minecraft"
 CLIENT_ID = "3d006e3a-abc5-4c7f-af37-d4f2104128f5"
 REDIRECT_URL = "https://login.microsoftonline.com/common/oauth2/nativeclient/"
-
+HEADERS = {
+    'User-Agent': 'github.com/QWERTZexe/QWERTZ-Launcher | QWERTZ Launcher 2.1',
+}
 with open(f"{cwd}/accounts.json", "r", encoding="utf-8") as f:
     accounts = json.load(f)
 if accounts["refresh"]["start"] == "1":
@@ -66,6 +68,275 @@ if accounts["refresh"]["start"] == "1":
                     json.dump(accounts,f)
             except:
                 pass   
+class ModManagerDialog(QDialog):
+    def __init__(self, parent=None, profile=None):
+        super().__init__(parent)
+        self.setWindowTitle("Mod Manager")
+        self.profile = profile
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        self.mod_list = QListWidget()
+        layout.addWidget(self.mod_list)
+
+        self.populate_mod_list()
+
+        remove_button = QPushButton("Remove Selected Mod")
+        remove_button.clicked.connect(self.remove_selected_mod)
+        layout.addWidget(remove_button)
+
+    def populate_mod_list(self):
+        mod_dir = f"{cwd}/profiles/{self.profile.name}/mods/"
+        if os.path.exists(mod_dir):
+            for mod_file in os.listdir(mod_dir):
+                mod_item = QListWidgetItem(mod_file)
+                self.mod_list.addItem(mod_item)
+
+    def remove_selected_mod(self):
+        selected_mod = self.mod_list.currentItem()
+        if selected_mod:
+            mod_name = selected_mod.text()
+            mod_path = f"{cwd}/profiles/{self.profile.name}/mods/{mod_name}"
+            reply = QMessageBox.question(self, 'Confirm', f'Are you sure you want to remove the mod "{mod_name}"?', QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.Yes:
+                os.remove(mod_path)
+                self.mod_list.takeItem(self.mod_list.row(selected_mod))
+        else:
+            QMessageBox.warning(self, "No Mod Selected", "Please select a mod to remove.")
+
+
+class DownloadModThread(QThread):
+    progress_updated = pyqtSignal(int)
+    finished = pyqtSignal(bool)
+
+    def __init__(self, download_url, download_path):
+        super().__init__()
+        self.download_url = download_url
+        self.download_path = download_path
+
+    def run(self):
+        try:
+            response = requests.get(self.download_url, stream=True,headers=HEADERS)
+            response.raise_for_status()
+            total_size = int(response.headers.get('content-length', 0))
+            block_size = 1024
+            progress = 0
+            with open(self.download_path, 'wb') as file:
+                for chunk in response.iter_content(chunk_size=block_size):
+                    if chunk:
+                        file.write(chunk)
+                        progress += len(chunk)
+                        self.progress_updated.emit(int((progress / total_size) * 100))
+            self.finished.emit(True)
+        except Exception as e:
+            QMessageBox.critical(None, "Error", str(e))
+            self.finished.emit(False)
+class CurseForgeModBrowserDialog(QDialog):
+    def __init__(self, parent=None, minecraft_version=None, loader=None, name=None):
+        super().__init__(parent)
+        self.setWindowTitle("CurseForge Mod Browser")
+        self.setGeometry(300, 300, 600, 500)
+        self.minecraft_version = minecraft_version
+        self.loader = loader
+        self.name = name
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Search for mods...")
+        layout.addWidget(self.search_input)
+
+        self.search_button = QPushButton("Search")
+        self.search_button.clicked.connect(self.search_mods)
+        layout.addWidget(self.search_button)
+
+        self.mod_list = QListWidget()
+        self.mod_list.itemSelectionChanged.connect(self.display_mod_versions)
+        layout.addWidget(self.mod_list)
+
+        self.version_list = QListWidget()
+        layout.addWidget(self.version_list)
+        self.show_incompatible_checkbox = QCheckBox("Show Incompatible Versions", self)
+        self.show_incompatible_checkbox.stateChanged.connect(self.display_mod_versions)
+        layout.addWidget(self.show_incompatible_checkbox)
+        self.add_button = QPushButton("Add Selected Version")
+        self.add_button.clicked.connect(self.add_selected_version)
+        layout.addWidget(self.add_button)
+        
+
+        self.progress_bar = QProgressBar()
+        layout.addWidget(self.progress_bar)
+
+    def search_mods(self):
+        search_query = self.search_input.text()
+        mlt = "1" if self.loader == "forge" else "4" if self.loader == "fabric" else ""
+        response = requests.get(f"https://api.curse.tools/v1/cf/mods/search?gameId=432&searchFilter={search_query}&classId=6&modLoaderType={mlt}", headers=HEADERS)
+        if response.status_code == 200:
+            mods = response.json()["data"]
+            self.mod_list.clear()
+            for mod in mods:
+                item = QListWidgetItem(mod["name"])
+                try:
+                    item.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(requests.get(mod["logo"]["url"], headers=HEADERS).content))))
+                except:
+                    with open(f"{cwd}/icons/curseforge.png","rb") as f:
+                        ico = f.read()
+                    item.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(ico))))
+                item.setData(Qt.ItemDataRole.UserRole, mod["id"])
+                self.mod_list.addItem(item)
+        else:
+            QMessageBox.warning(self, "Error", "Failed to fetch mods.")
+    def display_mod_versions(self):
+        if self.mod_list.selectedItems():
+            item = self.mod_list.selectedItems()[0]
+            mod_id = item.data(Qt.ItemDataRole.UserRole)
+            response = requests.get(f"https://api.curse.tools/v1/cf/mods/{mod_id}/files?pageSize=1000&gameVersion={self.minecraft_version}", headers=HEADERS)
+            if response.status_code == 200:
+                files = response.json()["data"]
+                self.version_list.clear()
+                for file in files:
+                    if self.minecraft_version in file["gameVersions"]:
+                        version_item = QListWidgetItem(file["displayName"])
+                        version_item.setData(Qt.ItemDataRole.UserRole, file["downloadUrl"])
+                        self.version_list.addItem(version_item)
+
+                if self.show_incompatible_checkbox.isChecked():   
+                    response = requests.get(f"https://api.curse.tools/v1/cf/mods/{mod_id}/files?pageSize=1000", headers=HEADERS)
+                    files = response.json()["data"]
+                    if response.status_code == 200:
+                        for file in files:
+                            if not self.minecraft_version in file["gameVersions"]:
+                                version_item = QListWidgetItem(file["displayName"])
+                                version_item.setForeground(QColor(255,0,0))
+                                version_item.setData(Qt.ItemDataRole.UserRole, file["downloadUrl"])  # Assuming the first file is the one to download
+                                self.version_list.addItem(version_item)  
+            else:
+                QMessageBox.warning(self, "Error", "Failed to fetch mod versions.")
+
+    def add_selected_version(self):
+        selected_version_item = self.version_list.currentItem()
+        if selected_version_item:
+            download_url = selected_version_item.data(Qt.ItemDataRole.UserRole)
+            mod_name = download_url.split("/")[-1]
+            download_path = f"{cwd}/profiles/{self.name}/mods/{mod_name}"
+            self.download_thread = DownloadModThread(download_url, download_path)
+            self.download_thread.progress_updated.connect(self.update_progress_bar)
+            self.download_thread.finished.connect(self.handle_download_finished)
+            self.download_thread.start()
+        else:
+            QMessageBox.warning(self, "No Version Selected", "Please select a version to add.")
+
+    def update_progress_bar(self, progress):
+        self.progress_bar.setValue(progress)
+
+    def handle_download_finished(self, success):
+        if success:
+            QMessageBox.information(self, "Success", "Mod downloaded successfully.")
+        else:
+            QMessageBox.critical(self, "Error", "Failed to download the mod.")
+class ModBrowserDialog(QDialog):
+    def __init__(self, parent=None, minecraft_version=None, loader=None,name=None):
+        super().__init__(parent)
+        self.setWindowTitle("Modrinth Mod Browser")
+        self.setGeometry(300, 300, 600, 500)
+        self.minecraft_version = minecraft_version
+        self.loader = loader
+        self.name = name
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Search for mods...")
+        layout.addWidget(self.search_input)
+
+        self.search_button = QPushButton("Search")
+        self.search_button.clicked.connect(self.search_mods)
+        layout.addWidget(self.search_button)
+
+        self.mod_list = QListWidget()
+        self.mod_list.itemSelectionChanged.connect(self.display_mod_versions)
+        layout.addWidget(self.mod_list)
+
+        self.version_list = QListWidget()
+        layout.addWidget(self.version_list)
+        self.show_incompatible_checkbox = QCheckBox("Show Incompatible Versions", self)
+        self.show_incompatible_checkbox.stateChanged.connect(self.display_mod_versions)
+        layout.addWidget(self.show_incompatible_checkbox)
+        self.add_button = QPushButton("Add Selected Version")
+        self.add_button.clicked.connect(self.add_selected_version)
+        layout.addWidget(self.add_button)
+        
+
+        self.progress_bar = QProgressBar()
+        layout.addWidget(self.progress_bar)
+
+    def search_mods(self):
+        search_query = self.search_input.text()
+        response = requests.get(f"https://api.modrinth.com/v2/search?query={search_query}",headers=HEADERS)
+        if response.status_code == 200:
+            mods = response.json()["hits"]
+            
+            self.version_list.clear()
+            self.mod_list.clear()
+            for mod in mods:
+                item = QListWidgetItem(mod["title"])
+                try:
+                    item.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(requests.get(mod["icon_url"],headers=HEADERS).content).scaled(100,100))))
+                except:
+                    with open(f"{cwd}/icons/modrinth.png","rb") as f:
+                        ico = f.read()
+                    item.setIcon(QIcon(QPixmap.fromImage(QImage.fromData(ico))))
+                item.setData(Qt.ItemDataRole.UserRole, mod["project_id"])
+                self.mod_list.addItem(item)
+        else:
+            QMessageBox.warning(self, "Error", "Failed to fetch mods.")
+
+    def display_mod_versions(self):
+        if self.mod_list.selectedItems():
+            mod_id = self.mod_list.selectedItems()[0].data(Qt.ItemDataRole.UserRole)
+            response = requests.get(f"https://api.modrinth.com/v2/project/{mod_id}/version",headers=HEADERS)
+            if response.status_code == 200:
+                versions = response.json()
+                self.version_list.clear()
+                for version in versions:
+                    if self.minecraft_version in version["game_versions"] and self.loader in version["loaders"]:
+                        version_item = QListWidgetItem(version["name"])
+                        version_item.setData(Qt.ItemDataRole.UserRole, version["files"][0]["url"])  # Assuming the first file is the one to download
+                        self.version_list.addItem(version_item)
+                if self.show_incompatible_checkbox.isChecked():
+                    for version in versions:
+                        if not self.minecraft_version in version["game_versions"] or not self.loader in version["loaders"]:
+                            version_item = QListWidgetItem(version["name"])
+                            version_item.setForeground(QColor(255,0,0))
+                            version_item.setData(Qt.ItemDataRole.UserRole, version["files"][0]["url"])  # Assuming the first file is the one to download
+                            self.version_list.addItem(version_item)                      
+            else:
+                QMessageBox.warning(self, "Error", "Failed to fetch mod versions.")
+
+    def add_selected_version(self):
+        selected_version_item = self.version_list.currentItem()
+        if selected_version_item:
+            name = self.name
+            download_url = selected_version_item.data(Qt.ItemDataRole.UserRole)
+            mod_name = download_url.split("/")[-1]
+            download_path = f"{cwd}/profiles/{name}/mods/{mod_name}"
+            self.download_thread = DownloadModThread(download_url, download_path)
+            self.download_thread.progress_updated.connect(self.update_progress_bar)
+            self.download_thread.finished.connect(self.handle_download_finished)
+            self.download_thread.start()
+        else:
+            QMessageBox.warning(self, "No Version Selected", "Please select a version to add.")
+
+    def update_progress_bar(self, progress):
+        self.progress_bar.setValue(progress)
+
+    def handle_download_finished(self, success):
+        if success:
+            QMessageBox.information(self, "Success", "Mod downloaded successfully.")
+        else:
+            QMessageBox.critical(self, "Error", "Failed to download the mod.")
 
 class DownloadAndExtractThread(QThread):
     progress_updated = pyqtSignal(int)
@@ -799,7 +1070,7 @@ class ProfileButton(QPushButton):
                     ver=profile["version"]
                     loader=profile["loader"]
                     name = profile["name"]
-                    ex.infoLabel.setText(f"Name: {name}   Version: {ver}   Loader: {loader}")
+                    ex.update_info_label(f"Name: {name}   Version: {ver}   Loader: {loader}")
             loader_dialog.accept()
         ok_button.clicked.connect(on_ok)
 
@@ -901,7 +1172,7 @@ class ProfileButton(QPushButton):
                 ver=profile["version"]
                 loader=profile["loader"]
                 name = profile["name"]
-                ex.infoLabel.setText(f"Name: {name}   Version: {ver}   Loader: {loader}")
+                ex.update_info_label(f"Name: {name}   Version: {ver}   Loader: {loader}")
     def deleteProfile(self):
         # Remove the profile from the profiles.json file
         reply = QMessageBox.question(self, 'Confirm', f'Are you sure you want to delete the profile "{self.name}"?', QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
@@ -1044,6 +1315,23 @@ class Launcher(QMainWindow):
             self.repair_thread.start()
         else:
             QMessageBox.warning(self, 'No Profile Selected', 'Please select a profile before trying to repair.')
+    def update_info_label(self,info):
+        self.infoLabel.setText(info)
+        with open(f"{cwd}/profiles.json","r") as f:
+            profiles = json.load(f)
+        for profile in profiles["profiles"]:
+            if profile["name"] == self.selectedProfile.name:
+                ver=profile["version"]
+                loader=profile["loader"]
+                name = profile["name"]
+        if loader in ["FORGE","FABRIC"]:
+            self.modrinth_action.setEnabled(True)
+            self.mod_manager_action.setEnabled(True)
+            self.curseforge_action.setEnabled(True)
+        else:
+            self.modrinth_action.setEnabled(False)
+            self.mod_manager_action.setEnabled(False)
+            self.curseforge_action.setEnabled(False)
     def populateProfiles(self):
         with open(f"{cwd}/profiles.json", "r") as f:
             self.profiles = json.load(f)
@@ -1059,14 +1347,25 @@ class Launcher(QMainWindow):
         self.toolBar = QToolBar()
         self.toolBar.setMovable(False)
         self.addToolBar(self.toolBar)
-
+        self.toolBar.setIconSize(QSize(35, 35))
         self.settingsAction = QAction(QIcon(f'{cwd}/icons/settings.png'), 'Settings', self)
         self.settingsAction.triggered.connect(self.settings)
 
         self.addProfileAction = QAction(QIcon(f'{cwd}/icons/add_profile.png'), 'Add Profile', self)
         self.addProfileAction.triggered.connect(self.addProfile)
         self.toolBar.addAction(self.addProfileAction)
-
+        self.modrinth_action = QAction(QIcon(f'{cwd}/icons/modrinth.png'), "Modrinth Browser", self)
+        self.modrinth_action.setEnabled(False)  # Initially disabled
+        self.modrinth_action.triggered.connect(self.open_mod_browser)
+        self.toolBar.addAction(self.modrinth_action)
+        self.curseforge_action = QAction(QIcon(f'{cwd}/icons/curseforge.png'), "Curseforge Browser", self)
+        self.curseforge_action.setEnabled(False)  # Initially disabled
+        self.curseforge_action.triggered.connect(self.open_curseforge_browser)
+        self.toolBar.addAction(self.curseforge_action)
+        self.mod_manager_action = QAction(QIcon(f'{cwd}/icons/modmanager.png'), 'Mod Manager', self)
+        self.mod_manager_action.triggered.connect(self.open_mod_manager)
+        self.mod_manager_action.setEnabled(False)  # Initially disabled
+        self.toolBar.addAction(self.mod_manager_action)
         # Create the Microsoft account dropdown
         with open(f"{cwd}/accounts.json","r") as f:
             self.accounts = json.load(f)
@@ -1119,7 +1418,6 @@ class Launcher(QMainWindow):
         self.active_account_layout.addWidget(self.active_account_icon,alignment=Qt.AlignmentFlag.AlignRight)
         # Add the toolbar actions
         self.toolBar.addAction(self.settingsAction)
-        self.toolBar.addAction(self.addProfileAction)
         spacer = QWidget(self)
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.toolBar.addWidget(spacer)
@@ -1127,6 +1425,22 @@ class Launcher(QMainWindow):
         self.toolBar.addAction(self.settingsAction)
         self.toolBar.addWidget(self.active_account_icon)
         self.toolBar.addWidget(self.microsoft_account_button)
+    def open_mod_manager(self):
+        if self.selectedProfile:
+            mod_manager_dialog = ModManagerDialog(self, self.selectedProfile)
+            mod_manager_dialog.exec()
+        else:
+            QMessageBox.warning(self, 'No Profile Selected', 'Please select a profile before managing mods.')
+    def open_mod_browser(self):
+        with open(f"{cwd}/profiles.json","r") as f:
+            profiles = json.load(f)
+        for profile in profiles["profiles"]:
+            if profile["name"] == self.selectedProfile.name:
+                ver=profile["version"]
+                loader=profile["loader"]
+                name = profile["name"]
+        mod_browser = ModBrowserDialog(self, ver,loader.lower(),name)
+        mod_browser.exec()
     def setActiveAccount(self,token,uuid,username):
         try:
             ico = requests.get(f"https://crafatar.com/avatars/{uuid}").content
@@ -1142,6 +1456,19 @@ class Launcher(QMainWindow):
             json.dump(self.accounts,f,indent=4)
     def showmessage(self,messagetitle, message):
         QMessageBox.information(self,messagetitle,message)
+    def open_curseforge_browser(self):
+        if self.selectedProfile:
+            with open(f"{cwd}/profiles.json","r") as f:
+                profiles = json.load(f)
+            for profile in profiles["profiles"]:
+                if profile["name"] == self.selectedProfile.name:
+                    ver=profile["version"]
+                    loader=profile["loader"]
+                    name = profile["name"]
+            curseforge_browser = CurseForgeModBrowserDialog(self,ver, loader,name)
+            curseforge_browser.exec()
+        else:
+            QMessageBox.warning(self, 'No Profile Selected', 'Please select a profile before opening the CurseForge mod browser.')
     def selectProfile(self, profile):
         for button in self.findChildren(ProfileButton):
             button.setChecked(False)
@@ -1159,7 +1486,7 @@ class Launcher(QMainWindow):
                 ver=profile["version"]
                 loader=profile["loader"]
                 name = profile["name"]
-                self.infoLabel.setText(f"Name: {name}   Version: {ver}   Loader: {loader}")
+                self.update_info_label(f"Name: {name}   Version: {ver}   Loader: {loader}")
     def launch(self):
 
         with open(f"{cwd}/accounts.json","r") as f:
