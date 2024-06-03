@@ -1327,11 +1327,13 @@ class Launcher(QMainWindow):
         if loader in ["FORGE","FABRIC"]:
             self.modrinth_action.setEnabled(True)
             self.mod_manager_action.setEnabled(True)
-            self.curseforge_action.setEnabled(True)
+            #### CURSEFORGE BROWSER DISABLED ####
+            #self.curseforge_action.setEnabled(True)
         else:
             self.modrinth_action.setEnabled(False)
             self.mod_manager_action.setEnabled(False)
-            self.curseforge_action.setEnabled(False)
+            #### CURSEFORGE BROWSER DISABLED ####
+            #self.curseforge_action.setEnabled(False)
     def populateProfiles(self):
         with open(f"{cwd}/profiles.json", "r") as f:
             self.profiles = json.load(f)
@@ -1358,10 +1360,14 @@ class Launcher(QMainWindow):
         self.modrinth_action.setEnabled(False)  # Initially disabled
         self.modrinth_action.triggered.connect(self.open_mod_browser)
         self.toolBar.addAction(self.modrinth_action)
-        self.curseforge_action = QAction(QIcon(f'{cwd}/icons/curseforge.png'), "Curseforge Browser", self)
-        self.curseforge_action.setEnabled(False)  # Initially disabled
-        self.curseforge_action.triggered.connect(self.open_curseforge_browser)
-        self.toolBar.addAction(self.curseforge_action)
+
+        #### CURSEFORGE BROWSER DISABLED ####
+        #self.curseforge_action = QAction(QIcon(f'{cwd}/icons/curseforge.png'), "Curseforge Browser", self)
+        #self.curseforge_action.setEnabled(False)  # Initially disabled
+        #self.curseforge_action.triggered.connect(self.open_curseforge_browser)
+        #self.toolBar.addAction(self.curseforge_action)
+        #### CURSEFORGE BROWSER DISABLED ####
+
         self.mod_manager_action = QAction(QIcon(f'{cwd}/icons/modmanager.png'), 'Mod Manager', self)
         self.mod_manager_action.triggered.connect(self.open_mod_manager)
         self.mod_manager_action.setEnabled(False)  # Initially disabled
