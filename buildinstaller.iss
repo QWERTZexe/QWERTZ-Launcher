@@ -25,7 +25,7 @@ InfoBeforeFile=[!CWD!]\README.md
 ; Remove the following line to run in administrative install mode (install for all users.)
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
-OutputBaseFilename=QWERTZ-LAUNCHER-2.0-WINDOWS-INSTALLER
+OutputBaseFilename=QWERTZ-LAUNCHER-[!VERSION!]-WINDOWS-INSTALLER
 SetupIconFile=[!CWD!]\icons\launcher.ico
 Compression=lzma
 SolidCompression=yes
