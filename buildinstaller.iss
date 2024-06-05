@@ -20,13 +20,13 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={userappdata}/QWERTZ-Launcher
 DisableProgramGroupPage=yes
-LicenseFile=C:\Users\QWERTZ\Downloads\QWERTZ-LAUNCHER\LICENSE
-InfoBeforeFile=C:\Users\QWERTZ\Downloads\QWERTZ-LAUNCHER\README.md
+LicenseFile=[!CWD!]\LICENSE
+InfoBeforeFile=[!CWD!]\README.md
 ; Remove the following line to run in administrative install mode (install for all users.)
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 OutputBaseFilename=QWERTZ-LAUNCHER-2.0-WINDOWS-INSTALLER
-SetupIconFile=C:\Users\QWERTZ\Downloads\QWERTZ-LAUNCHER\icons\launcher.ico
+SetupIconFile=[!CWD!]\icons\launcher.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -40,12 +40,12 @@ Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\Users\QWERTZ\Downloads\QWERTZ-LAUNCHER\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\QWERTZ\Downloads\QWERTZ-LAUNCHER\CREDITS.html"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\QWERTZ\Downloads\QWERTZ-LAUNCHER\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\QWERTZ\Downloads\QWERTZ-LAUNCHER\README.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\QWERTZ\Downloads\QWERTZ-LAUNCHER\icons\*"; DestDir: "{app}\icons"; Flags: ignoreversion
-Source: "C:\Users\QWERTZ\Downloads\QWERTZ-LAUNCHER\icons\profiles\*"; DestDir: "{app}\icons\profiles"; Flags: ignoreversion
+Source: "[!CWD!]\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "[!CWD!]\CREDITS.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "[!CWD!]\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "[!CWD!]\README.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "[!CWD!]\icons\*"; DestDir: "{app}\icons"; Flags: ignoreversion
+Source: "[!CWD!]\icons\profiles\*"; DestDir: "{app}\icons\profiles"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
