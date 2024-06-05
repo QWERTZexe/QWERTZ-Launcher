@@ -4,6 +4,6 @@ minecraft_launcher_lib
 accounts.json
 profiles.json
 logs
-profiles
 test.py
+/profiles
 __pycache__
